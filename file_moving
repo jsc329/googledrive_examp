@@ -1,0 +1,38 @@
+library(googledrive)
+library(tidyverse)
+
+# Use this to list out all
+# the files that are within a folder
+hoop <- drive_ls(path = "~/Full Carn Recs Out/")
+# Check to see how many files
+length(unique(hoop$name))
+
+# Pull in the filenames from another folder
+recs <- drive_ls(path = "~/Full Carnegie Bird Recs/")
+
+# Get the first part of the filename
+out_files <- word(hoop$name, sep="\\.", 1)
+out_filesdf <- data.frame(file = hoop$name,
+                          source_file = out_files,
+                          add_data = word(hoop$name, sep=" ", 2),
+                          prefix = word(hoop$name, sep=" ", 1))
+
+big_files <- c(out_filesdf$source_file, out_filesdf$prefix)
+
+# Now get the list of recordings still present
+rec_files <- data.frame(file = recs$name, id = recs$id)
+rec_files$source_file <- word(rec_files$file, sep="\\.", 1)
+
+rec_files <- left_join(rec_files, out_filesdf, by="source_file")
+
+# Okay get rec files
+rec_filt <- filter(rec_files, is.na(file.y))
+
+# Let's move files
+drive_mv(as_id(rec_filt$id[1]), path="~/Full Carnegie Bird Recs 2/")
+
+for (i in 2:nrow(rec_filt)){
+  
+  drive_mv(as_id(rec_filt$id[i]), path="~/Full Carnegie Bird Recs 2/")
+  
+}
